@@ -57,7 +57,7 @@ def main():
     user_input = st.text_input("메시지를 입력하세요:", key="user_input")
     
     # 전송 버튼
-    if st.button("전송"):
+    if st.button("보내기"):
         if user_input:
             # 사용자 메시지 저장
             st.session_state.messages.append({"role": "user", "content": user_input})
