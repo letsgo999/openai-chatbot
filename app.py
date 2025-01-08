@@ -68,6 +68,20 @@ def get_chatbot_response(client, user_input):
         logging.error(f"Error in API call: {str(e)}")
         return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
 
+def process_input(client, user_input):
+    if user_input:
+        # 사용자 메시지 저장
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        
+        # 챗봇 응답 받기
+        response = get_chatbot_response(client, user_input)
+        
+        # 챗봇 응답 저장
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        # 입력창 초기화
+        st.session_state.user_input = ""
+
 # Streamlit UI
 def main():
     st.title("Simple ChatBot")
@@ -95,20 +109,19 @@ def main():
     # 세션 상태 초기화
     if 'messages' not in st.session_state:
         st.session_state.messages = []
+    if 'user_input' not in st.session_state:
+        st.session_state.user_input = ""
 
     # 사용자 입력
-    user_input = st.text_input("메시지를 입력하세요:")
+    user_input = st.text_input(
+        "메시지를 입력하세요:",
+        key="user_input",
+        on_change=process_input,
+        args=(client, st.session_state.user_input)
+    )
     
-    if st.button("전송"):
-        if user_input:
-            # 사용자 메시지 저장
-            st.session_state.messages.append({"role": "user", "content": user_input})
-            
-            # 챗봇 응답 받기
-            response = get_chatbot_response(client, user_input)
-            
-            # 챗봇 응답 저장
-            st.session_state.messages.append({"role": "assistant", "content": response})
+    if st.button("보내기"):
+        process_input(client, user_input)
 
     # 대화 이력 표시
     for message in st.session_state.messages:
