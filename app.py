@@ -45,8 +45,7 @@ def setup_page_style():
         .stButton button {
             border-radius: 25px;
             background-color: #4CAF50;
-            padding: 12px 15px;
-            font-size: 20px;
+            padding: 8px 15px;
             transition: all 0.3s ease;
             min-height: 46px;
             line-height: 1;
@@ -60,15 +59,26 @@ def setup_page_style():
             box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
         }
         
-        /* 버튼 아이콘 회전 효과 */
+        /* SVG 아이콘 스타일링 */
         .send-icon {
-            display: inline-block;
-            transform: rotate(45deg);
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+        
+        /* 버튼 내부 SVG 정렬 */
+        .stButton button > div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stButton button svg {
             transition: transform 0.3s ease;
         }
         
-        .stButton button:hover .send-icon {
-            transform: rotate(45deg) translateX(3px);
+        .stButton button:hover svg {
+            transform: translateX(3px);
         }
         
         /* 메시지 표시 영역 스타일링 */
@@ -215,7 +225,11 @@ def main():
             placeholder="이곳을 클릭하여 메시지를 입력하세요..."
         )
     with col2:
-        if st.button("📨", use_container_width=True):
+        if st.button(
+            """<svg class="send-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 21l21-9L2 3l0 7l15 2-15 2z" fill="white"/>
+            </svg>""", 
+            use_container_width=True):
             process_message()
     st.markdown('</div>', unsafe_allow_html=True)
 
