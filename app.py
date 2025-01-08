@@ -63,8 +63,8 @@ def setup_page_style():
         
         /* 메시지 표시 영역 스타일링 */
         .chat-message {
-            padding: 10px 20px;
-            margin: 5px 0;
+            padding: 12px 20px;
+            margin: 8px 0;
             border-radius: 15px;
             max-width: 80%;
         }
@@ -73,12 +73,20 @@ def setup_page_style():
             background-color: #e3f2fd;
             margin-left: auto;
             margin-right: 10px;
+            text-align: right;
         }
         
         .bot-message {
             background-color: #f5f5f5;
             margin-left: 10px;
             margin-right: auto;
+            display: flex;
+            align-items: center;
+        }
+        
+        .bot-icon {
+            margin-right: 8px;
+            font-size: 20px;
         }
         
         /* 입력 영역 고정 */
@@ -139,8 +147,10 @@ def get_chatbot_response(client, user_input):
 
 def format_message(role, content):
     css_class = "user-message" if role == "user" else "bot-message"
-    name = "You" if role == "user" else "Bot"
-    return f'<div class="chat-message {css_class}">{name}: {content}</div>'
+    if role == "user":
+        return f'<div class="chat-message {css_class}">{content}</div>'
+    else:
+        return f'<div class="chat-message {css_class}"><span class="bot-icon">🤖</span> {content}</div>'
 
 def process_message():
     if st.session_state.user_input and st.session_state.user_input.strip():
