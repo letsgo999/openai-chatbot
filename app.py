@@ -1,9 +1,18 @@
 import streamlit as st
 from openai import OpenAI
-import os
 
-# Streamlit secrets에서 API 키 가져오기
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# Streamlit secrets에서 API 키 가져오기 (에러 처리 추가)
+try:
+    api_key = st.secrets.get("OPENAI_API_KEY")
+    if not api_key:
+        st.error("OpenAI API 키가 secrets.toml 파일에 설정되지 않았습니다.")
+        st.stop()
+    
+    client = OpenAI(api_key=api_key)
+except Exception as e:
+    st.error("API 키를 불러오는 데 문제가 발생했습니다. secrets.toml 파일을 확인해주세요.")
+    st.error(f"오류 내용: {str(e)}")
+    st.stop()
 
 def ask_openai(prompt):
     try:
