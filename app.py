@@ -83,10 +83,28 @@ def process_message():
         
         # 입력창 초기화
         st.session_state.user_input = ""
+        
+        # 자동 포커스를 위한 플래그 설정
+        st.session_state.focus_input = True
 
 # Streamlit UI
 def main():
     st.title("Simple ChatBot")
+    
+    # 자바스크립트 코드 추가
+    st.markdown("""
+        <script>
+            function focusInput() {
+                const input = document.querySelector('input[type="text"]');
+                if (input) {
+                    input.focus();
+                }
+            }
+            
+            // 주기적으로 포커스 확인
+            setInterval(focusInput, 100);
+        </script>
+    """, unsafe_allow_html=True)
     
     # API 키 상태 표시
     api_key = get_api_key()
@@ -115,6 +133,9 @@ def main():
     
     if 'user_input' not in st.session_state:
         st.session_state.user_input = ""
+        
+    if 'focus_input' not in st.session_state:
+        st.session_state.focus_input = False
 
     # 대화 이력 표시
     for message in st.session_state.messages:
@@ -127,15 +148,28 @@ def main():
     col1, col2 = st.columns([6, 1])
     
     with col1:
+        # autofocus 속성 추가
         st.text_input(
             "메시지를 입력하세요:",
             key="user_input",
-            on_change=process_message
+            on_change=process_message,
+            label_visibility="collapsed",  # 레이블 숨기기
+            # 기본 포커스 설정
+            kwargs={"autofocus": True}
         )
     
     with col2:
-        if st.button("보내기"):
+        if st.button("보내기", use_container_width=True):
             process_message()
+
+    # 포커스 자동 설정을 위한 JavaScript 실행
+    if st.session_state.focus_input:
+        st.markdown("""
+            <script>
+                focusInput();
+            </script>
+        """, unsafe_allow_html=True)
+        st.session_state.focus_input = False
 
 if __name__ == "__main__":
     main()
