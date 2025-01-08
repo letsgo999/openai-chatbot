@@ -4,20 +4,31 @@ import openai
 import os
 from dotenv import load_dotenv
 
-# .env 파일에서 환경변수 로드
-load_dotenv()
-
-# OpenAI API 키 설정
-openai.api_key = os.getenv("OPENAI_API_KEY")
+def setup_openai_api():
+    """OpenAI API 키 설정"""
+    # 1. Streamlit Secrets에서 키 확인
+    api_key = st.secrets.get("OPENAI_API_KEY")
+    
+    # 2. 환경변수에서 키 확인
+    if not api_key:
+        load_dotenv()
+        api_key = os.getenv("OPENAI_API_KEY")
+    
+    if not api_key:
+        st.error("OpenAI API 키가 설정되지 않았습니다. Streamlit Cloud의 Secrets에서 OPENAI_API_KEY를 설정해주세요.")
+        st.stop()
+    
+    return api_key
 
 def initialize_session_state():
     """세션 상태 초기화"""
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-def get_openai_response(prompt):
+def get_openai_response(prompt, api_key):
     """OpenAI API를 사용하여 응답 생성"""
     try:
+        openai.api_key = api_key
         messages = [{"role": "user", "content": prompt}]
         
         response = openai.ChatCompletion.create(
@@ -29,11 +40,15 @@ def get_openai_response(prompt):
         
         return response.choices[0].message.content
     except Exception as e:
-        return f"오류가 발생했습니다: {str(e)}"
+        st.error(f"OpenAI API 호출 중 오류가 발생했습니다: {str(e)}")
+        return None
 
 def main():
     # 페이지 설정
     st.title("간단한 챗봇")
+    
+    # API 키 설정
+    api_key = setup_openai_api()
     
     # 세션 상태 초기화
     initialize_session_state()
@@ -48,10 +63,11 @@ def main():
             st.session_state.messages.append({"role": "user", "content": user_input})
             
             # AI 응답 생성
-            response = get_openai_response(user_input)
+            response = get_openai_response(user_input, api_key)
             
-            # AI 응답 저장
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            if response:
+                # AI 응답 저장
+                st.session_state.messages.append({"role": "assistant", "content": response})
     
     # 대화 기록 표시
     for message in st.session_state.messages:
