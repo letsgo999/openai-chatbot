@@ -76,17 +76,22 @@ def setup_page_style():
             text-align: right;
         }
         
-        .bot-message {
-            background-color: #f5f5f5;
+        .bot-message-container {
+            display: flex;
+            align-items: flex-start;
             margin-left: 10px;
             margin-right: auto;
-            display: flex;
-            align-items: center;
+            gap: 8px;
+        }
+        
+        .bot-message {
+            background-color: #f5f5f5;
+            flex-grow: 0;
         }
         
         .bot-icon {
-            margin-right: 8px;
             font-size: 20px;
+            padding-top: 12px;
         }
         
         /* 입력 영역 고정 */
@@ -146,11 +151,15 @@ def get_chatbot_response(client, user_input):
         return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
 
 def format_message(role, content):
-    css_class = "user-message" if role == "user" else "bot-message"
     if role == "user":
-        return f'<div class="chat-message {css_class}">{content}</div>'
+        return f'<div class="chat-message user-message">{content}</div>'
     else:
-        return f'<div class="chat-message {css_class}"><span class="bot-icon">🤖</span> {content}</div>'
+        return f'''
+            <div class="bot-message-container">
+                <div class="bot-icon">🤖</div>
+                <div class="chat-message bot-message">{content}</div>
+            </div>
+        '''
 
 def process_message():
     if st.session_state.user_input and st.session_state.user_input.strip():
