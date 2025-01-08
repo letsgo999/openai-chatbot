@@ -6,15 +6,14 @@ import os
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def ask_openai(prompt):
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=150,
-        n=1,
-        stop=None,
-        temperature=0.7,
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response.choices[0].text.strip()
+    return response.choices[0].message['content'].strip()
 
 st.title("OpenAI 질문 응답 챗봇")
 st.write("안녕하세요! OpenAI 챗봇입니다. 질문을 입력하세요.")
