@@ -96,34 +96,31 @@ def main():
     if 'messages' not in st.session_state:
         st.session_state.messages = []
 
-    # 채팅 이력 컨테이너
-    chat_container = st.container()
-    
+    # 대화 이력 표시
+    for message in st.session_state.messages:
+        if message["role"] == "user":
+            st.write("You:", message["content"])
+        else:
+            st.write("Bot:", message["content"])
+
     # 입력 폼
     with st.form(key='message_form', clear_on_submit=True):
         user_input = st.text_input("메시지를 입력하세요:", key='input')
         submit_button = st.form_submit_button(label="보내기")
 
-    if submit_button and user_input:
-        # 사용자 메시지 저장
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        
-        # 챗봇 응답 받기
-        response = get_chatbot_response(client, user_input)
-        
-        # 챗봇 응답 저장
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        
-        # 페이지 새로고침
-        st.rerun()
-
-    # 대화 이력 표시
-    with chat_container:
-        for message in st.session_state.messages:
-            if message["role"] == "user":
-                st.write("You:", message["content"])
-            else:
-                st.write("Bot:", message["content"])
+        if submit_button and user_input:
+            # 사용자 메시지 저장
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            
+            # 챗봇 응답 받기
+            response = get_chatbot_response(client, user_input)
+            
+            # 챗봇 응답 저장
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # 페이지 새로고침
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
+    
