@@ -1,21 +1,21 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 import os
 
-# OpenAI API 키 설정
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# OpenAI 클라이언트 초기화
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def ask_openai(prompt):
     try:
-        # 최신 API 호출 방식
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # 최신 모델 사용
+        # 새로운 API 호출 방식
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
             ]
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message.content
     except Exception as e:
         return f"오류 발생: {str(e)}"
 
