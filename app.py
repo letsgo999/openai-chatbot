@@ -60,4 +60,62 @@ def get_chatbot_response(client, user_input):
         )
         
         end_time = datetime.now()
-        duration = (end_time - start_time).total
+        duration = (end_time - start_time).total_seconds()
+        logging.info(f"API request completed in {duration} seconds")
+        
+        return response.choices[0].message.content
+    except Exception as e:
+        logging.error(f"Error in API call: {str(e)}")
+        return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
+
+# Streamlit UI
+def main():
+    st.title("Simple ChatBot")
+    
+    # API 키 상태 표시
+    api_key = get_api_key()
+    if not api_key:
+        st.error("API 키를 찾을 수 없습니다. 다음 위치를 확인해주세요:")
+        st.write("1. Streamlit Cloud의 환경변수 설정")
+        st.write("2. 로컬 .env 파일")
+        st.write("3. 시스템 환경변수")
+        return
+    
+    if not validate_api_key(api_key):
+        st.error("API 키가 유효하지 않습니다. 키를 확인해주세요.")
+        # API 키의 일부를 마스킹하여 표시 (디버깅 목적)
+        if api_key:
+            masked_key = f"{api_key[:5]}...{api_key[-4:]}"
+            st.write(f"현재 설정된 키: {masked_key}")
+        return
+
+    # OpenAI 클라이언트 초기화
+    client = OpenAI(api_key=api_key)
+
+    # 세션 상태 초기화
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
+
+    # 사용자 입력
+    user_input = st.text_input("메시지를 입력하세요:")
+    
+    if st.button("전송"):
+        if user_input:
+            # 사용자 메시지 저장
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            
+            # 챗봇 응답 받기
+            response = get_chatbot_response(client, user_input)
+            
+            # 챗봇 응답 저장
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # 대화 이력 표시
+    for message in st.session_state.messages:
+        if message["role"] == "user":
+            st.write("You:", message["content"])
+        else:
+            st.write("Bot:", message["content"])
+
+if __name__ == "__main__":
+    main()
