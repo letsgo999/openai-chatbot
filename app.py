@@ -18,11 +18,11 @@ def ask_openai(prompt):
 st.title("OpenAI 질문 응답 챗봇")
 st.write("안녕하세요! OpenAI 챗봇입니다. 질문을 입력하세요.")
 
-user_input = st.text_input("당신: ")
+# Form을 사용하여 엔터 키로 전송 기능과 버튼 텍스트 변경
+with st.form(key='chat_form', clear_on_submit=True):
+    user_input = st.text_input("당신:", key='input', placeholder="질문을 입력하세요", autofocus=True)
+    submit_button = st.form_submit_button(label="보내기")
 
-if st.button("전송"):
-    if user_input:
-        response = ask_openai(user_input)
-        st.write(f"챗봇: {response}")
-    else:
-        st.write("질문을 입력해주세요.")
+if submit_button and user_input:
+    response = ask_openai(user_input)
+    st.write(f"챗봇: {response}")
