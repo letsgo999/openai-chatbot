@@ -16,45 +16,86 @@ logging.basicConfig(
 # .env 파일 로드
 load_dotenv()
 
-# 자동 포커스를 위한 JavaScript 추가
-def inject_custom_css():
+# 스타일 및 레이아웃 설정
+def setup_page_style():
     st.markdown("""
         <style>
-            /* 입력창 스타일링 */
-            .stTextInput input {
-                background-color: #f0f2f6;
-            }
+        /* 전체 채팅창 스타일 */
+        .stApp {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* 입력창 스타일링 */
+        .stTextInput input {
+            font-size: 16px;
+            padding: 12px 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 25px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .stTextInput input:hover {
+            border-color: #45a049;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+        
+        /* 보내기 버튼 스타일링 */
+        .stButton button {
+            border-radius: 25px;
+            background-color: #4CAF50;
+            padding: 12px 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .stButton button:hover {
+            background-color: #45a049;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+        
+        /* 메시지 표시 영역 스타일링 */
+        .chat-message {
+            padding: 10px 20px;
+            margin: 5px 0;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            margin-right: 10px;
+        }
+        
+        .bot-message {
+            background-color: #f5f5f5;
+            margin-left: 10px;
+            margin-right: auto;
+        }
+        
+        /* 입력 영역 고정 */
+        .input-area {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* 채팅 영역과 입력 영역 사이 간격 */
+        .chat-container {
+            margin-bottom: 100px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-def inject_custom_js():
-    st.markdown("""
-        <script>
-            // 주기적으로 입력창에 포커스를 주는 함수
-            const focusInput = () => {
-                const inputs = window.parent.document.getElementsByTagName("input");
-                const textInput = Array.from(inputs).find(input => input.type === "text");
-                if (textInput) {
-                    textInput.focus();
-                }
-            }
-            
-            // 0.5초마다 포커스 시도
-            setInterval(focusInput, 500);
-            
-            // 페이지 로드 시 즉시 포커스
-            window.addEventListener('load', focusInput);
-            
-            // 새 메시지가 추가될 때마다 포커스
-            const observer = new MutationObserver(focusInput);
-            observer.observe(window.parent.document.body, {
-                childList: true,
-                subtree: true
-            });
-        </script>
-    """, unsafe_allow_html=True)
-
-# 환경변수에서 API 키 가져오기
 def get_api_key():
     try:
         api_key = st.secrets["OPENAI_API_KEY"]
@@ -90,6 +131,11 @@ def get_chatbot_response(client, user_input):
         logging.error(f"Error in API call: {str(e)}")
         return f"죄송합니다. 오류가 발생했습니다: {str(e)}"
 
+def format_message(role, content):
+    css_class = "user-message" if role == "user" else "bot-message"
+    name = "You" if role == "user" else "Bot"
+    return f'<div class="chat-message {css_class}">{name}: {content}</div>'
+
 def process_message():
     if st.session_state.user_input and st.session_state.user_input.strip():
         user_input = st.session_state.user_input.strip()
@@ -106,13 +152,9 @@ def process_message():
         # 입력창 초기화
         st.session_state.user_input = ""
 
-# Streamlit UI
 def main():
     st.set_page_config(page_title="Simple ChatBot", layout="wide")
-    
-    # CSS와 JavaScript 주입
-    inject_custom_css()
-    inject_custom_js()
+    setup_page_style()
     
     st.title("Simple ChatBot")
     
@@ -136,26 +178,30 @@ def main():
     # 채팅 히스토리 표시
     chat_container = st.container()
     with chat_container:
+        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
         for message in st.session_state.messages:
-            if message["role"] == "user":
-                st.write("You:", message["content"])
-            else:
-                st.write("Bot:", message["content"])
+            st.markdown(
+                format_message(message["role"], message["content"]),
+                unsafe_allow_html=True
+            )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # 입력 영역
-    st.markdown("<div id='input-area'>", unsafe_allow_html=True)
+    # 입력 영역 (하단 고정)
+    st.markdown('<div class="input-area">', unsafe_allow_html=True)
     col1, col2 = st.columns([6, 1])
     with col1:
+        # 자동완성 비활성화 및 placeholder 텍스트 추가
         st.text_input(
-            "메시지를 입력하세요:",
+            "메시지를 입력하세요",
             key="user_input",
             on_change=process_message,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            placeholder="이곳을 클릭하여 메시지를 입력하세요..."
         )
     with col2:
         if st.button("보내기", use_container_width=True):
             process_message()
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
