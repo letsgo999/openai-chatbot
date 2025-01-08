@@ -2,6 +2,7 @@
 import streamlit as st
 import openai
 import os
+from dotenv import load_dotenv
 import logging
 from datetime import datetime
 
@@ -12,18 +13,41 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# 환경변수에서 API 키 가져오기
-api_key = os.getenv('OPENAI_API_KEY')
+# .env 파일 로드
+load_dotenv()
+
+# 환경변수에서 API 키 가져오기 (Streamlit Cloud 환경변수 또는 .env 파일)
+def get_api_key():
+    # 1. Streamlit secrets에서 확인
+    try:
+        api_key = st.secrets["OPENAI_API_KEY"]
+        logging.info("API key loaded from Streamlit secrets")
+        return api_key
+    except:
+        logging.info("API key not found in Streamlit secrets, checking environment variables")
+    
+    # 2. 환경변수에서 확인
+    api_key = os.getenv('OPENAI_API_KEY')
+    if api_key:
+        logging.info("API key loaded from environment variables")
+        return api_key
+    
+    logging.error("API key not found in any location")
+    return None
 
 # API 키 확인 및 로깅
-def validate_api_key():
+def validate_api_key(api_key):
     if not api_key:
-        logging.error("API key not found in environment variables")
+        logging.error("API key validation failed")
         return False
-    logging.info("API key successfully loaded")
+    if len(api_key) < 20:  # OpenAI API 키는 일반적으로 매우 긴 문자열입니다
+        logging.error("API key seems invalid (too short)")
+        return False
+    logging.info("API key validation successful")
     return True
 
 # OpenAI API 초기화
+api_key = get_api_key()
 openai.api_key = api_key
 
 def get_chatbot_response(user_input):
@@ -52,9 +76,21 @@ def get_chatbot_response(user_input):
 def main():
     st.title("Simple ChatBot")
     
-    # API 키 확인
-    if not validate_api_key():
-        st.error("API 키가 설정되지 않았습니다. 환경변수를 확인해주세요.")
+    # API 키 상태 표시
+    api_key = get_api_key()
+    if not api_key:
+        st.error("API 키를 찾을 수 없습니다. 다음 위치를 확인해주세요:")
+        st.write("1. Streamlit Cloud의 환경변수 설정")
+        st.write("2. 로컬 .env 파일")
+        st.write("3. 시스템 환경변수")
+        return
+    
+    if not validate_api_key(api_key):
+        st.error("API 키가 유효하지 않습니다. 키를 확인해주세요.")
+        # API 키의 일부를 마스킹하여 표시 (디버깅 목적)
+        if api_key:
+            masked_key = f"{api_key[:5]}...{api_key[-4:]}"
+            st.write(f"현재 설정된 키: {masked_key}")
         return
 
     # 세션 상태 초기화
@@ -64,7 +100,7 @@ def main():
     # 사용자 입력
     user_input = st.text_input("메시지를 입력하세요:")
     
-    if st.button("보내기"):
+    if st.button("전송"):
         if user_input:
             # 사용자 메시지 저장
             st.session_state.messages.append({"role": "user", "content": user_input})
