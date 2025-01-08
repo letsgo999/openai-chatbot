@@ -2,12 +2,11 @@ import streamlit as st
 from openai import OpenAI
 import os
 
-# OpenAI 클라이언트 초기화
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Streamlit secrets에서 API 키 가져오기
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def ask_openai(prompt):
     try:
-        # 새로운 API 호출 방식
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
